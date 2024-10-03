@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class CategoryModel extends Model
 {
-    protected $table = 'categories'; // Nama tabel di database
-    protected $primaryKey = 'id'; // Nama kolom primary key
-    protected $allowedFields = ['category_name']; // Kolom yang dapat diisi
+    protected $table = 'categories'; 
+    protected $primaryKey = 'id'; 
+    protected $allowedFields = ['category_name']; 
 }

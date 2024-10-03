@@ -28,11 +28,9 @@ $routes->group('auth', function($routes) {
 // Exam routes
 $routes->group('exam', function($routes) {
     $routes->get('index', 'ExamController::index'); // Route for the exam index page
-    $routes->get('start/(:num)', 'ExamController::start/$1');  // Route for starting the exam by category ID
-    $routes->post('submit/(:num)', 'ExamController::submit/$1'); // Route for submitting the exam answers
+    $routes->get('start/(:num)', 'ExamController::start/$1'); // Route for starting the exam by category ID
+    $routes->post('submit/(:num)', 'ExamController::submit/$1'); // Route for submitting all exam answers
     $routes->get('result', 'ExamController::result'); // Route for displaying exam results
-    // Correctly define the navigate route with two parameters
-    $routes->get('navigate/(:num)/(:num)', 'ExamController::navigate/$1/$2'); // Route for navigating questions
 });
 
 // Dashboard route

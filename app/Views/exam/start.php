@@ -1,57 +1,38 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('content') ?>
-<h2 class="mt-5">Mulai Ujian</h2>
-<div id="timer" class="mb-4">Waktu: <span id="time">0:00</span></div>
+<div class="container mt-5">
+    <h2 class="mt-4 text-center">Mulai Ujian: <?= esc($category['category_name']) ?></h2>
+    <div id="timer" class="mb-4 text-center h5">Waktu: <span id="time" class="text-danger">0:00</span></div>
 
-<div class="alert alert-info">
-    Total Soal: <?= esc($pager->getTotal()) ?> | 
-    Soal Sekarang: <?= esc($pager->getCurrentPage()) ?> 
-</div>
-
-<div class="card mb-3">
-    <div class="card-body">
-        <h5 class="card-title"><?= esc($questions[0]['question']) ?></h5>
-        <form action="<?= site_url('exam/submit/' . esc($category['id'])); ?>" method="post" id="exam-form">
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="answer[<?= esc($questions[0]['id']) ?>]" value="<?= esc($questions[0]['option_a']) ?>" <?= (isset($answered[$questions[0]['id']]) && $answered[$questions[0]['id']] === esc($questions[0]['option_a'])) ? 'checked' : '' ?> required>
-                <label class="form-check-label"><?= esc($questions[0]['option_a']) ?></label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="answer[<?= esc($questions[0]['id']) ?>]" value="<?= esc($questions[0]['option_b']) ?>" <?= (isset($answered[$questions[0]['id']]) && $answered[$questions[0]['id']] === esc($questions[0]['option_b'])) ? 'checked' : '' ?>>
-                <label class="form-check-label"><?= esc($questions[0]['option_b']) ?></label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="answer[<?= esc($questions[0]['id']) ?>]" value="<?= esc($questions[0]['option_c']) ?>" <?= (isset($answered[$questions[0]['id']]) && $answered[$questions[0]['id']] === esc($questions[0]['option_c'])) ? 'checked' : '' ?>>
-                <label class="form-check-label"><?= esc($questions[0]['option_c']) ?></label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="answer[<?= esc($questions[0]['id']) ?>]" value="<?= esc($questions[0]['option_d']) ?>" <?= (isset($answered[$questions[0]['id']]) && $answered[$questions[0]['id']] === esc($questions[0]['option_d'])) ? 'checked' : '' ?>>
-                <label class="form-check-label"><?= esc($questions[0]['option_d']) ?></label>
-            </div>
+    <div class="alert alert-info text-center">
+        Total Soal: <?= esc(count($questions)) ?> | 
+        Soal Terjawab: <span id="answered-count"><?= esc(count($answered)) ?></span>
     </div>
-</div>
 
-<button type="submit" class="btn btn-success">Submit Ujian</button>
-</form>
+    <form action="<?= site_url('exam/submit/' . esc($category['id'])); ?>" method="post" id="exam-form">
+        <?php foreach ($questions as $question): ?>
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title"><?= esc($question['question']) ?></h5>
+                    <?php foreach (['option_a', 'option_b', 'option_c', 'option_d'] as $option): ?>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="answer[<?= esc($question['id']) ?>]" value="<?= esc($question[$option]) ?>" 
+                                <?= (isset($answered[$question['id']]) && $answered[$question['id']] === $question[$option]) ? 'checked' : '' ?> required>
+                            <label class="form-check-label" for="answer-<?= esc($question['id']) ?>-<?= esc($option) ?>"><?= esc($question[$option]) ?></label>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endforeach; ?>
 
-<div class="mt-3">
-    <div class="d-flex flex-wrap justify-content-center mb-3">
-        <?php for ($i = 1; $i <= esc($pager->getTotal()); $i++): ?>
-            <?php 
-            
-                $isAnswered = isset($answered[$i]);
-                $buttonClass = $isAnswered ? 'btn-success' : 'btn-outline-primary';
-            ?>
-            <a href="<?= base_url('/exam/navigate/' . esc($category['id']) . '/' . $i) ?>" class="btn <?= $buttonClass ?> mx-1" style="width: 40px; height: 40px;">
-                <?= $i ?>
-            </a>
-        <?php endfor; ?>
-    </div>
+        <button type="submit" class="btn btn-success btn-lg btn-block">Submit Ujian</button>
+    </form>
+
 </div>
 
 <script>
-    const totalQuestions = <?= esc($pager->getTotal()) ?>; 
+    const totalQuestions = <?= esc(count($questions)) ?>;  
     const totalTime = totalQuestions * 2 * 60; 
 
     let timerInterval;
@@ -85,8 +66,66 @@
         color: white; 
     }
 
-    .btn-outline-primary {
-        border-color: #007bff; 
+    .btn-success:hover {
+        background-color: #218838; 
+        color: white; 
+    }
+
+    .alert {
+        font-size: 1.1em;
+    }
+
+    #timer {
+        font-size: 1.5em;
+    }
+
+    .form-check-input {
+        position: relative;
+        cursor: pointer;
+        width: 20px; 
+        height: 20px; 
+        margin-right: 10px; 
+    }
+
+    .form-check-label {
+        cursor: pointer;
+        font-size: 1.1em; 
+    }
+
+    .form-check-input:checked {
+        background-color: #28a745; 
+        border-color: #28a745; 
+    }
+
+    .form-check-input:checked + .form-check-label {
+        color: #28a745; 
+        font-weight: bold; 
+    }
+
+    .form-check-input:focus {
+        outline: none; 
+    }
+
+    .form-check-input:focus-visible {
+        outline: 2px solid #28a745; 
+    }
+
+    .card-title {
+        font-size: 1.2em;
+    }
+
+    .btn {
+        border-radius: 0; 
+    }
+
+    @media (max-width: 768px) {
+        .card-title {
+            font-size: 1.1em;
+        }
+
+        .form-check-label {
+            font-size: 1em; 
+        }
     }
 </style>
 

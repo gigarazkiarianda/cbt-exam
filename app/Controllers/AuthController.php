@@ -96,16 +96,16 @@ class AuthController extends BaseController
         $user = $userModel->where('email', $this->request->getPost('email'))->first();
 
         if ($user && password_verify($this->request->getPost('password'), $user['password'])) {
-            // Set session data after successful login
+            
             $sessionData = [
                 'id' => $user['id'],
                 'username' => $user['username'],
                 'email' => $user['email'],
-                'logged_in' => true, // Use 'logged_in' for session check
+                'logged_in' => true, 
             ];
             session()->set($sessionData);
 
-            return redirect()->to('exam/index'); // Redirect ke halaman index ujian
+            return redirect()->to('exam/index'); 
         } else {
             log_message('error', 'Login gagal: Email atau password tidak valid.');
             return redirect()->back()->with('error', 'Email atau password tidak valid.');
@@ -114,7 +114,7 @@ class AuthController extends BaseController
 
     public function logout()
     {
-        session()->destroy(); // Destroy session on logout
+        session()->destroy(); 
         return redirect()->to('auth/login');
     }
 }

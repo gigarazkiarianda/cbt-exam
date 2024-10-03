@@ -8,5 +8,5 @@ class ExamModel extends Model
 {
     protected $table = 'exams'; 
     protected $primaryKey = 'id';
-    protected $allowedFields = [ 'score'];
+    protected $allowedFields = ['user_id', 'category_id', 'score'];
 }

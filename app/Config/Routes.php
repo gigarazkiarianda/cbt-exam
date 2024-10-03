@@ -4,18 +4,41 @@ namespace Config;
 
 use CodeIgniter\Config\BaseConfig;
 use CodeIgniter\Router\RouteCollection;
-
-/**
- * @var RouteCollection $routes
- */
-
+use Config\Services;
 
 $routes = Services::routes();
 
+// Load the system's default routes if they exist
+if (file_exists(SYSTEMPATH . 'Config/Routes.php')) {
+    require SYSTEMPATH . 'Config/Routes.php';
+}
 
-$routes->get('/', 'Home::index');
-$routes->get('/exam/start', 'ExamController::start'); 
-$routes->post('/exam/submit', 'ExamController::submit'); 
-$routes->get('/exam/result', 'ExamController::result'); 
+// Default route
+$routes->get('/', 'AuthController::login');
 
-$routes->get('/exam/navigate/(:num)', 'ExamController::navigate/$1'); 
+// Authentication routes
+$routes->group('auth', function($routes) {
+    $routes->get('login', 'AuthController::login');
+    $routes->post('login', 'AuthController::storeLogin'); // POST route for login
+    $routes->get('register', 'AuthController::register');
+    $routes->post('storeRegister', 'AuthController::storeRegister'); // Route for registration handling
+    $routes->get('logout', 'AuthController::logout');
+});
+
+// Exam routes
+$routes->group('exam', function($routes) {
+    $routes->get('index', 'ExamController::index'); // Route for the exam index page
+    $routes->get('start/(:num)', 'ExamController::start/$1');  // Route for starting the exam by category ID
+    $routes->post('submit/(:num)', 'ExamController::submit/$1'); // Route for submitting the exam answers
+    $routes->get('result', 'ExamController::result'); // Route for displaying exam results
+    // Correctly define the navigate route with two parameters
+    $routes->get('navigate/(:num)/(:num)', 'ExamController::navigate/$1/$2'); // Route for navigating questions
+});
+
+// Dashboard route
+$routes->get('dashboard', 'DashboardController::index'); // Redirect after successful login
+
+// Load additional routes for the current environment if they exist
+if (file_exists(APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php')) {
+    require APPPATH . 'Config/' . ENVIRONMENT . '/Routes.php';
+}

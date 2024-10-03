@@ -4,98 +4,133 @@ namespace App\Controllers;
 
 use App\Models\ExamModel;
 use App\Models\QuestionModel;
+use App\Models\CategoryModel;
 
 class ExamController extends BaseController
 {
-    public function start()
+    public function index()
     {
-        $model = new QuestionModel();
-        
-      
-        $data['questions'] = $model->paginate(1); 
-        $data['pager'] = $model->pager; 
-        
-        
-        $data['answered'] = session()->get('answered') ?? [];
+        $categoryModel = new CategoryModel();
+        $categories = $categoryModel->findAll();
 
-        return view('exam/start', $data); 
+        return view('exam/index', [
+            'categories' => $categories
+        ]);
     }
 
-    public function submit()
+    public function start($categoryId)
     {
-        
-        $answers = $this->request->getPost('answer'); 
-
-        
-        $answered = session()->get('answered') ?? [];
-        foreach ($answers as $questionId => $answer) {
-            $answered[$questionId] = $answer; 
+        $session = session();
+        if (!$session->get('logged_in')) {
+            return redirect()->to('/auth/login');
         }
-        session()->set('answered', $answered); 
+
+        $questionModel = new QuestionModel();
+        $categoryModel = new CategoryModel();
+
+        $data['category'] = $categoryModel->find($categoryId);
+        if (!$data['category']) {
+            return redirect()->to('/exam/index');
+        }
+
+        $data['questions'] = $questionModel->where('category_id', $categoryId)->paginate(1);
+        $data['pager'] = $questionModel->pager;
+        $data['answered'] = $session->get('answered') ?? [];
+
+        return view('exam/start', $data);
+    }
+
+    public function submit($categoryId)
+    {
+        $session = session();
+
+        if (!$session->get('logged_in')) {
+            return redirect()->to('/auth/login');
+        }
+
+        $answers = $this->request->getPost('answer');
+        $answered = $session->get('answered') ?? [];
+
+        foreach ($answers as $questionId => $answer) {
+            $answered[$questionId] = $answer;
+        }
+
+        $session->set('answered', $answered);
 
         $score = 0;
-
-        
-        $model = new QuestionModel();
-        $totalQuestions = $model->countAll(); 
+        $questionModel = new QuestionModel();
+        $totalQuestions = $questionModel->where('category_id', $categoryId)->countAllResults();
 
         foreach ($answers as $questionId => $answer) {
-            
-            $question = $model->find($questionId);
-            if ($question && $question['correct_answer'] == $answer) { 
+            $question = $questionModel->find($questionId);
+            if ($question && $question['correct_answer'] === $answer) {
                 $score++;
             }
         }
 
-        
         $finalScore = ($totalQuestions > 0) ? ($score / $totalQuestions) * 100 : 0;
 
-        
         $examModel = new ExamModel();
         $examModel->save([
-            'score' => round($finalScore)
+            'user_id' => $session->get('id'),
+            'category_id' => $categoryId,
+            'score' => round($finalScore),
         ]);
 
-        
-        session()->remove('answered');
-
-        
+        $session->remove('answered');
         return redirect()->to('/exam/result');
     }
 
     public function result()
-    {
-        
-        $examModel = new ExamModel();
-        $data['results'] = $examModel->paginate(10); 
-        $data['pager'] = $examModel->pager; 
+{
+    $session = session();
 
-       
-        $lastScore = end($data['results'])['score'] ?? 0; 
-
-        
-        if ($lastScore === 100) {
-            $data['message'] = 'Selamat! Nilai Anda di atas KKM.';
-        } elseif ($lastScore < 75) {
-            $data['message'] = 'Anda harus mengikuti remedial, karena nilai Anda di bawah KKM.';
-        } else {
-            $data['message'] = 'Nilai Anda cukup baik.';
-        }
-
-        return view('exam/result', $data); 
+    if (!$session->get('logged_in')) {
+        return redirect()->to('/auth/login');
     }
 
-    public function navigate($page)
+    $examModel = new ExamModel();
+    $userModel = new \App\Models\UserModel(); 
+    $categoryModel = new \App\Models\CategoryModel();
+
+    $data['results'] = $examModel
+        ->where('user_id', $session->get('id'))
+        ->paginate(10);
+    $data['pager'] = $examModel->pager;
+
+    $data['examDetails'] = []; 
+    foreach ($data['results'] as $result) {
+        $user = $userModel->find($result['user_id']);
+        $category = $categoryModel->find($result['category_id']);
+
+        $data['examDetails'][] = [
+            'user_id' => $result['user_id'],
+            'username' => $user ? $user['username'] : 'Unknown',
+            'category_id' => $result['category_id'],
+            'category_name' => $category ? $category['category_name'] : 'Unknown', 
+            'score' => $result['score'],
+        ];
+    }
+
+    return view('exam/result', $data);
+}
+
+    public function navigate($categoryId, $page)
     {
-        $model = new QuestionModel();
+        $session = session();
 
-        
-        $data['questions'] = $model->paginate(1, 'default', $page); 
-        $data['pager'] = $model->pager; 
-        
-        
-        $data['answered'] = session()->get('answered') ?? [];
+        if (!$session->get('logged_in')) {
+            return redirect()->to('/auth/login');
+        }
 
-        return view('exam/start', $data); 
+        $questionModel = new QuestionModel();
+        $data['category'] = (new CategoryModel())->find($categoryId);
+        $data['questions'] = $questionModel
+            ->where('category_id', $categoryId)
+            ->paginate(1, 'default', $page);
+        $data['pager'] = $questionModel->pager;
+        $data['answered'] = $session->get('answered') ?? [];
+
+        return view('exam/start', $data);
     }
 }

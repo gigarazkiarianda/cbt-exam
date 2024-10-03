@@ -13,8 +13,6 @@
     </style>
 </head>
 <body>
-
-   
     <?php include APPPATH . 'Views/partials/header.php'; ?>
 
     <div class="container mt-5">
